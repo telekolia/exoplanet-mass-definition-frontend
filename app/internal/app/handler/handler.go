@@ -55,10 +55,7 @@ func (h *Handler) GetFeed(ctx *gin.Context) {
 		logrus.Error(err)
 	}
 
-	var current repository.Telescope
-	if len(telescopes) > 0 {
-		current = telescopes[0]
-	}
+	current := telescopes[0]
 
 	ctx.HTML(http.StatusOK, "feed.html", gin.H{
 		"telescope": current,

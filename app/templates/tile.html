@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>Телескопная — Плитка</title>
-    <link rel="stylesheet" href="/static/style.css">
+    <link rel="stylesheet" href="/static/tile.css">
 </head>
 <body>
 
@@ -45,11 +45,6 @@
                 <img src="{{ .ImageURL }}" alt="{{ .Title }}" class="card-image">
                 <div class="card-title">{{ .Title }}</div>
                 <div class="card-likes">♡ {{ .LikesCount }}</div>
-                {{ if .InStock }}
-                    <span class="card-stock in-stock">В наличии</span>
-                {{ else }}
-                    <span class="card-stock out-stock">Нет в наличии</span>
-                {{ end }}
                 <a href="/telescope/{{ .ID }}" class="card-button">Подробнее</a>
             </div>
             {{ end }}
@@ -58,7 +53,7 @@
     </main>
 
     <footer class="bottom-nav">
-        <a href="/">Лента</a>
+        <a href="/feed">Лента</a>
         <a href="/add">Добавление</a>
         <a href="/tile">Плитка</a>
     </footer>

@@ -10,7 +10,7 @@ html, body {
 }
 
 body.feed-body {
-    background-color: #1a1a1a;
+    background-color: #131415;
     color: #ffffff;
     display: flex;
     flex-direction: column;
@@ -21,7 +21,7 @@ body.feed-body {
 .top-header {
     flex-shrink: 0;
     width: 100%;
-    background-color: #1a1a1a;
+    background-color: #131415;
     text-align: center;
     padding: 20px 0;
 }
@@ -170,7 +170,7 @@ body.feed-body {
 .bottom-nav {
     flex-shrink: 0;
     width: 390px;
-    background-color: #1a1a1a;
+    background-color: #192025;
     display: flex;
     justify-content: space-around;
     padding: 18px 0;
