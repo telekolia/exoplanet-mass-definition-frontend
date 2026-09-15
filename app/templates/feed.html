@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Телескопная — Лента</title>
+    <link rel="stylesheet" href="/static/tile.css">
+</head>
+<body class="feed-body">
+
+    <header class="top-header">
+        <h1>Телескопная</h1>
+    </header>
+
+    <main class="feed-main">
+
+        <div class="feed-card">
+            <!-- Фоновое видео -->
+            <video class="feed-video" src="/static/lenta.mp4" autoplay muted loop playsinline></video>
+
+            <!-- Затемнение, чтобы текст читался -->
+            <div class="feed-overlay"></div>
+
+            <!-- Контент поверх видео -->
+            <div class="feed-content">
+
+                <div class="feed-info">
+                    <h2 class="feed-title">{{ .telescope.Title }}</h2>
+                    <p class="feed-desc">{{ .telescope.ShortDescription }}</p>
+                </div>
+
+                <div class="feed-actions">
+                    <!-- Лайк: не нажимается, но показывает кол-во -->
+                    <div class="feed-like">
+                        <div class="like-icon">♡</div>
+                        <span class="like-count">{{ .telescope.LikesCount }}</span>
+                    </div>
+
+                    <!-- Кнопка "Далее" -->
+                    <a href="/telescope/{{ .telescope.ID }}" class="feed-next" aria-label="Далее">
+                        →
+                    </a>
+                </div>
+
+            </div>
+        </div>
+
+    </main>
+
+    <footer class="bottom-nav">
+        <a href="/">Лента</a>
+        <a href="/add">Добавление</a>
+        <a href="/tile">Плитка</a>
+    </footer>
+
+</body>
+</html>

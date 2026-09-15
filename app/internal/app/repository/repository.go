@@ -18,12 +18,23 @@ type Telescope struct {
 	MeasurementCost  int
 	MaxMagnification int
 	ImageURL         string
+	VideoURL         string
 	InStock          bool
 	Likes            []int
 }
 
 func (t Telescope) LikesCount() int {
 	return len(t.Likes)
+}
+
+func (t Telescope) ShortDescription() string {
+	const limit = 100
+	// Работаем по рунам, чтобы не разрезать многобайтовые символы
+	runes := []rune(t.Description)
+	if len(runes) <= limit {
+		return t.Description
+	}
+	return string(runes[:limit]) + "..."
 }
 
 func (r *Repository) GetTelescopes() ([]Telescope, error) {
@@ -35,6 +46,7 @@ func (r *Repository) GetTelescopes() ([]Telescope, error) {
 			MeasurementCost:  2000,
 			MaxMagnification: 480,
 			ImageURL:         "/static/telescope.png",
+			VideoURL:         "/static/lenta.mp4",
 			InStock:          true,
 			Likes:            []int{1, 2, 3, 5, 8, 13},
 		},
@@ -45,6 +57,7 @@ func (r *Repository) GetTelescopes() ([]Telescope, error) {
 			MeasurementCost:  2399,
 			MaxMagnification: 480,
 			ImageURL:         "/static/telescope.png",
+			VideoURL:         "/static/lenta.mp4",
 			InStock:          true,
 			Likes:            []int{4, 7, 9, 11},
 		},
@@ -55,6 +68,7 @@ func (r *Repository) GetTelescopes() ([]Telescope, error) {
 			MeasurementCost:  1500,
 			MaxMagnification: 354,
 			ImageURL:         "/static/telescope.png",
+			VideoURL:         "/static/lenta.mp4",
 			InStock:          true,
 			Likes:            []int{2, 6, 10},
 		},
@@ -65,48 +79,9 @@ func (r *Repository) GetTelescopes() ([]Telescope, error) {
 			MeasurementCost:  1200,
 			MaxMagnification: 295,
 			ImageURL:         "/static/telescope.png",
+			VideoURL:         "/static/lenta.mp4",
 			InStock:          false,
 			Likes:            []int{3, 5},
-		},
-		{
-			ID:               5,
-			Title:            "NexStar 4SE Computerized Telescope",
-			Description:      "4-дюймовый Максутов-Кассегрен с GoTo. Компактный и удобный для наблюдений Луны и планет.",
-			MeasurementCost:  1000,
-			MaxMagnification: 236,
-			ImageURL:         "/static/telescope.png",
-			InStock:          true,
-			Likes:            []int{1, 4, 6, 12, 14, 15, 16, 17, 18, 19, 20, 21},
-		},
-		{
-			ID:               6,
-			Title:            "Advanced VX 8\" Schmidt-Cassegrain",
-			Description:      "8-дюймовый SCT на экваториальной монтировке Advanced VX. Подходит для астрофотографии.",
-			MeasurementCost:  3200,
-			MaxMagnification: 480,
-			ImageURL:         "/static/telescope.png",
-			InStock:          true,
-			Likes:            []int{2, 3, 4, 5, 6, 7, 8, 9, 10},
-		},
-		{
-			ID:               7,
-			Title:            "Astro Fi 102mm Maksutov-Cassegrain",
-			Description:      "102-мм Максутов-Кассегрен с управлением со смартфона через Wi-Fi. Компактный, идеален для начинающих.",
-			MeasurementCost:  800,
-			MaxMagnification: 241,
-			ImageURL:         "/static/telescope.png",
-			InStock:          false,
-			Likes:            []int{11, 22, 23},
-		},
-		{
-			ID:               8,
-			Title:            "PowerSeeker 127EQ Newtonian",
-			Description:      "127-мм рефлектор Ньютона на экваториальной монтировке. Отличный старт для знакомства с небом.",
-			MeasurementCost:  600,
-			MaxMagnification: 300,
-			ImageURL:         "/static/telescope.png",
-			InStock:          true,
-			Likes:            []int{1, 2, 3},
 		},
 	}
 

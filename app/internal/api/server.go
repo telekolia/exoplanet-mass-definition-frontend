@@ -23,6 +23,8 @@ func StartServer() {
 	r.LoadHTMLGlob("templates/*")
 	r.Static("/static", "./resources")
 
+	r.GET("/", handler.GetFeed)
+	r.GET("/feed", handler.GetFeed)
 	r.GET("/tile", handler.GetTile)
 
 	r.Run()
