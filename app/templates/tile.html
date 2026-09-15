@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Телескопная — Плитка</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+
+    <header class="top-header">
+        <h1>Телескопная</h1>
+    </header>
+
+    <main class="page">
+
+        <h2 class="page-title">Каталог телескопов</h2>
+
+        <!-- Панель фильтрации -->
+    <form class="filter-panel" method="GET" action="/tile">
+        <div class="filter-title">Стоимость замера, ₽</div>
+
+        <div class="range-slider">
+            <div class="slider-track"></div>
+            <div class="slider-range" id="slider-range"></div>
+            <input type="range" min="0" max="5000" value="{{ .min }}" step="100"
+                class="slider-input" id="range-min" name="min">
+            <input type="range" min="0" max="5000" value="{{ .max }}" step="100"
+                class="slider-input" id="range-max" name="max">
+        </div>
+
+        <div class="filter-values">
+            <span id="label-min">От {{ .min }} ₽</span>
+            <span id="label-max">до {{ .max }} ₽</span>
+        </div>
+
+        <button type="submit" class="filter-apply">Применить</button>
+    </form>
+
+        <p class="results-label">Результаты поиска:</p>
+
+        <!-- Сетка карточек: ровно 2 колонки -->
+        <div class="cards-grid">
+            {{ range .telescopes }}
+            <div class="telescope-card">
+                <img src="{{ .ImageURL }}" alt="{{ .Title }}" class="card-image">
+                <div class="card-title">{{ .Title }}</div>
+                <div class="card-likes">♡ {{ .LikesCount }}</div>
+                {{ if .InStock }}
+                    <span class="card-stock in-stock">В наличии</span>
+                {{ else }}
+                    <span class="card-stock out-stock">Нет в наличии</span>
+                {{ end }}
+                <a href="/telescope/{{ .ID }}" class="card-button">Подробнее</a>
+            </div>
+            {{ end }}
+        </div>
+
+    </main>
+
+    <footer class="bottom-nav">
+        <a href="/">Лента</a>
+        <a href="/add">Добавление</a>
+        <a href="/tile">Плитка</a>
+    </footer>
+
+    <script src="/static/slider.js"></script>
+</body>
+</html>
