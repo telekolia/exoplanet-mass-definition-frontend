@@ -1,0 +1,70 @@
+@font-face {
+  font-family: 'Noto Sans';
+  src: url('../fonts/NotoSans-VF.ttf') format('truetype-variation');
+  font-weight: 100 900;
+  font-style: normal;
+}
+
+@font-face {
+    font-family: 'Noto Sans';
+    src: url('../fonts/NotoSans-Italic-VF.ttf') format('truetype-variation');
+    font-weight: 100 900;
+    font-style: italic;
+}
+
+body {
+    background-color: #131415;
+    font-family: 'Noto Sans', sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin: 0;
+    min-height: 100dvh;
+}
+
+.app {
+  width: 411px;
+  margin: 0 auto;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+}
+
+.top-header {
+    background-color: #131415;
+    color: #ffffff;
+    text-align: center;
+    box-sizing: border-box;
+    padding: 20px;
+    width: 100%;
+    height: 80px;
+    flex-shrink: 0;
+}
+
+.top-header h1 {
+    font-size: 1.25rem;
+    font-style: normal;
+    font-weight: 800;
+}
+
+.bottom-nav {
+    background-color: #192025;
+    color: #ffffff;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-around;
+    padding: 20px;
+    width: 100%;
+    flex-shrink: 0;
+}
+
+.bottom-nav a {
+    color: #ffffff;
+    font-size: 1.125rem;
+    font-weight: 600;
+}
+
+.bottom-nav a:hover {
+    color: #EF600A;
+}

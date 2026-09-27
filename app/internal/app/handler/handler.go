@@ -19,45 +19,83 @@ func NewHandler(r *repository.Repository) *Handler {
 	}
 }
 
-func (h *Handler) GetTile(ctx *gin.Context) {
+func (h *Handler) GetTelescopeTiles(ctx *gin.Context) {
 	var telescopes []repository.Telescope
 	var err error
 
-	minCost := 0
-	maxCost := 100000
+	minLatitude := -90.0
+	maxLatitude := 90.0
 
 	if v := ctx.Query("min"); v != "" {
-		if parsed, e := strconv.Atoi(v); e == nil {
-			minCost = parsed
+		if parsed, e := strconv.ParseFloat(v, 64); e == nil {
+			minLatitude = parsed
 		}
 	}
 	if v := ctx.Query("max"); v != "" {
-		if parsed, e := strconv.Atoi(v); e == nil {
-			maxCost = parsed
+		if parsed, e := strconv.ParseFloat(v, 64); e == nil {
+			maxLatitude = parsed
 		}
 	}
 
-	telescopes, err = h.Repository.GetTelescopesByCostRange(minCost, maxCost)
+	telescopes, err = h.Repository.GetTelescopesByLatitudeRange(minLatitude, maxLatitude)
 	if err != nil {
 		logrus.Error(err)
 	}
 
-	ctx.HTML(http.StatusOK, "tile.html", gin.H{
+	ctx.HTML(http.StatusOK, "telescope-tile.html", gin.H{
 		"telescopes": telescopes,
-		"min":        minCost,
-		"max":        maxCost,
+		"min":        minLatitude,
+		"max":        maxLatitude,
 	})
 }
 
-func (h *Handler) GetFeed(ctx *gin.Context) {
+func (h *Handler) GetTelescopeFeed(ctx *gin.Context) {
 	telescopes, err := h.Repository.GetTelescopes()
-	if err != nil {
+	if err != nil || len(telescopes) == 0 {
 		logrus.Error(err)
+		ctx.String(http.StatusInternalServerError, "нет данных")
+		return
 	}
 
-	current := telescopes[0]
+	currentID := 0
+	if v := ctx.Query("id"); v != "" {
+		if parsed, e := strconv.Atoi(v); e == nil {
+			currentID = parsed
+		}
+	}
 
-	ctx.HTML(http.StatusOK, "feed.html", gin.H{
+	var current repository.Telescope
+	found := false
+	for _, t := range telescopes {
+		if t.ID == currentID {
+			current = t
+			found = true
+			break
+		}
+	}
+	if !found {
+		current = telescopes[0]
+	}
+
+	nextID := 0
+	minID := 0
+	for i, t := range telescopes {
+		if i == 0 || t.ID < minID {
+			minID = t.ID
+		}
+		if t.ID > current.ID {
+			if nextID == 0 || t.ID < nextID {
+				nextID = t.ID
+			}
+		}
+	}
+
+	if nextID == 0 {
+		nextID = minID
+	}
+
+	ctx.HTML(http.StatusOK, "telescope-feed.html", gin.H{
 		"telescope": current,
+		"next":      nextID,
 	})
 }
