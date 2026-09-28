@@ -54,7 +54,7 @@
                     <img src="/static/heart_empty.svg">
                     <p>{{ .LikesCount }}</p>
                 </div>
-                <a href="/telescope/{{ .ID }}" class="main-button">Подробнее</a>
+                <a href="/telescope-feed?id={{ .ID }}" class="main-button">Подробнее</a>
             </div>
             {{ end }}
         </div>
@@ -63,7 +63,7 @@
 
     <footer class="bottom-nav">
         <a href="/telescope-feed">Лента</a>
-        <a href="/telescope-add">Добавление</a>
+        <a href="/telescope-draft">Добавление</a>
         <a href="/telescope-tile">Плитка</a>
     </footer>
 

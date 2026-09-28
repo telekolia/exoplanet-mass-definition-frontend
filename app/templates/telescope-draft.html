@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Телескопная — Лента</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="stylesheet" href="/static/css/draft.css">
+</head>
+
+<body class="app">
+
+    <header class="top-header">
+        <h1>Телескопная</h1>
+    </header>
+
+    <main class="draft-main">
+        <h2>Черновик</h2>
+        <h3>Предпросмотр медиа</h3>
+        <div class="input-container">
+            <img src="{{ .telescope.ImageURL }}"
+                 alt="{{ .telescope.Title }}" class="preview__content">
+
+            <video autoplay muted loop playsinline class="preview__content">
+                <source src="{{ .telescope.VideoURL }}" type="video/mp4">
+            </video>
+        </div>
+
+        <h3>Заголовки</h3>
+        <div class="input-container">
+            <h4>Название</h4>
+            <input type="text" name="title" value="{{ .telescope.Title }}">
+            <h4>Описание</h4>
+            <input type="text" name="description" value="{{ .telescope.Description }}">
+        </div>
+
+        <h3>Загрузка медиа</h3>
+        <div class="input-container">
+            <h4>Изображение</h4>
+            <input type="file" name="image" accept="image/*">
+            <h4>Видео</h4>
+            <input type="file" name="video" accept="video/*">
+        </div>
+
+        <h3>Поля по теме</h3>
+        <div class="input-container">
+            <h4>Широта</h4>
+            <input type="number" step="0.0001" min="-90.0" max="90.0"
+                name="latitude" value="{{ .telescope.Latitude }}" placeholder="38.5">
+            <h4>Долгота</h4>
+            <input type="number" step="0.0001" min="-180.0" max="180.0"
+                name="longitude" value="{{ .telescope.Longitude }}" placeholder="38.5">
+        </div>
+    </main>
+
+    <footer class="bottom-nav">
+        <a href="/telescope-feed">Лента</a>
+        <a href="/telescope-draft">Добавление</a>
+        <a href="/telescope-tile">Плитка</a>
+    </footer>
+
+</body>
+
+</html>

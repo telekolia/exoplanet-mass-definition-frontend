@@ -24,7 +24,8 @@ func StartServer() {
 	r.Static("/static", "./resources")
 
 	r.GET("/telescope-feed", handler.GetTelescopeFeed)
-	r.GET("/telescope-tile", handler.GetTelescopeTiles)
+	r.GET("/telescope-tile", handler.GetTelescopeTile)
+	r.GET("/telescope-draft", handler.GetTelescopeDraft)
 
 	r.Run()
 	log.Println("Server down")

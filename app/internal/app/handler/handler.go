@@ -19,7 +19,7 @@ func NewHandler(r *repository.Repository) *Handler {
 	}
 }
 
-func (h *Handler) GetTelescopeTiles(ctx *gin.Context) {
+func (h *Handler) GetTelescopeTile(ctx *gin.Context) {
 	var telescopes []repository.Telescope
 	var err error
 
@@ -98,4 +98,14 @@ func (h *Handler) GetTelescopeFeed(ctx *gin.Context) {
 		"telescope": current,
 		"next":      nextID,
 	})
+}
+
+func (h *Handler) GetTelescopeDraft(ctx *gin.Context) {
+	telescope, err := h.Repository.GetTelescope(1)
+	if err != nil {
+		ctx.String(http.StatusNotFound, err.Error())
+		return
+	}
+
+	ctx.HTML(http.StatusOK, "telescope-draft.html", gin.H{"telescope": telescope})
 }
