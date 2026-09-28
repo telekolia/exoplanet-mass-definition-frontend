@@ -51,7 +51,7 @@ func (r *Repository) GetTelescopes() ([]Telescope, error) {
 			Likes:       []int{1, 2, 3, 5, 8, 13},
 		},
 		{
-			ID:          2,
+			ID:          10,
 			Title:       "NexStar Evolution 8 Telescope",
 			Description: "Компактная 8-дюймовая Шмидт-Кассегрен с StarBright XLT и Fastar. LiFePO4 аккумулятор на 10 часов, USB-порт.",
 			Latitude:    -60.1,
@@ -62,7 +62,7 @@ func (r *Repository) GetTelescopes() ([]Telescope, error) {
 			Likes:       []int{4, 7, 9, 11},
 		},
 		{
-			ID:          3,
+			ID:          30,
 			Title:       "NexStar 6SE Computerized Telescope",
 			Description: "6-дюймовый Шмидт-Кассегрен с GoTo. Идеален для начинающих: лёгкий, компактный, с базой на 40 000 объектов.",
 			Latitude:    -34.052,
@@ -73,7 +73,7 @@ func (r *Repository) GetTelescopes() ([]Telescope, error) {
 			Likes:       []int{2, 6, 10},
 		},
 		{
-			ID:          4,
+			ID:          31,
 			Title:       "NexStar 5SE Computerized Telescope",
 			Description: "5-дюймовый Шмидт-Кассегрен с GoTo. Отличный выбор для города и выездов на природу.",
 			Latitude:    75.21467,

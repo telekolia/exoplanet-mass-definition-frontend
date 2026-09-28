@@ -14,42 +14,42 @@
     <main class="feed-main">
         <article class="feed-card">
             <video class="feed-card__video" autoplay muted loop playsinline>
-            <source src="/static/lenta.mp4" type="video/mp4">
+                <source src="/static/lenta.mp4" type="video/mp4">
             </video>
 
             <div class="feed-card__overlay">
-            <div class="feed-card__info">
-                <h2 class="feed-card__title">{{ .telescope.Title }}</h2>
-                <p class="feed-card__desc">{{ .telescope.Description}}</p>
-                <a>Ещё</a>
-            </div>
-
-            <aside class="feed-card__actions">
-                <div>
-                    <p class="feed-card__actions__solo-text">широта:</p>
-                    <div class="feed-card__actions__box">
-                        <p class="feed-card__actions__box-text">{{ .telescope.Latitude }}</p>
-                    </div>
+                <div class="feed-card__info">
+                    <h2 class="feed-card__title">{{ .telescope.Title }}</h2>
+                    <p class="feed-card__desc">{{ .telescope.Description}}</p>
+                    <a>Ещё</a>
                 </div>
 
-                <div>
-                    <p class="feed-card__actions__solo-text">долгота:</p>
-                    <div class="feed-card__actions__box">
-                        <p>{{ .telescope.Longitude }}</p>
+                <aside class="feed-card__actions">
+                    <div>
+                        <p class="feed-card__actions__solo-text">широта:</p>
+                        <div class="feed-card__actions__box">
+                            <p class="feed-card__actions__box-text">{{ .telescope.Latitude }}</p>
+                        </div>
                     </div>
-                </div>
 
-                <div>
-                    <div class="feed-card__actions__box">
-                        <img src="static/heart_empty.svg" class="feed-card__actions__box-text">
+                    <div>
+                        <p class="feed-card__actions__solo-text">долгота:</p>
+                        <div class="feed-card__actions__box">
+                            <p>{{ .telescope.Longitude }}</p>
+                        </div>
                     </div>
-                    <p class="feed-card__actions__solo-text feed-card__actions__likes-amount">{{ .telescope.LikesCount }}</p>
-                </div>
 
-                <a href="/telescope-feed?id={{ .next }}" class="feed-card__actions__next">
-                    <img src="/static/arrow.svg" alt="далее">
-                </a>
-            </aside>
+                    <div>
+                        <div class="feed-card__actions__box">
+                            <img src="static/heart_empty.svg" class="feed-card__actions__box-text">
+                        </div>
+                        <p class="feed-card__actions__solo-text feed-card__actions__likes-amount">{{ .telescope.LikesCount }}</p>
+                    </div>
+
+                    <a href="/telescope-feed?id={{ .next }}" class="feed-card__actions__next">
+                        <img src="/static/arrow.svg" alt="далее">
+                    </a>
+                </aside>
             </div>
         </article>
     </main>

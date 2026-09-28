@@ -1,13 +1,13 @@
 @font-face {
   font-family: 'Noto Sans';
-  src: url('../fonts/NotoSans-VF.ttf') format('truetype-variation');
+  src: url('/static/fonts/NotoSans-VF.ttf') format('truetype');
   font-weight: 100 900;
   font-style: normal;
 }
 
 @font-face {
     font-family: 'Noto Sans';
-    src: url('../fonts/NotoSans-Italic-VF.ttf') format('truetype-variation');
+    src: url('/static/fonts/NotoSans-Italic-VF.ttf') format('truetype');
     font-weight: 100 900;
     font-style: italic;
 }
@@ -67,4 +67,27 @@ body {
 
 .bottom-nav a:hover {
     color: #EF600A;
+}
+
+.main-button {
+    width: 144px;
+    height: 48px;
+    border-radius: 40px;
+    background-color: #FFFFFF;
+    border: 1px solid #131415;
+    color: #000000;
+    font-family: "Noto Sans", sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.main-button:hover {
+    background-color: #C8C9CA;
+    color: #000000;
 }

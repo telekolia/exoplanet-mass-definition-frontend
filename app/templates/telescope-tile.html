@@ -5,6 +5,7 @@
     <meta charset="UTF-8">
     <title>Телескопная — Плитка</title>
     <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="stylesheet" href="/static/css/tile.css">
 </head>
 
 <body class="app">
@@ -13,41 +14,47 @@
         <h1>Телескопная</h1>
     </header>
 
-    <main class="page">
+    <main class="tile-main">
 
-        <h2 class="page-title">Каталог телескопов</h2>
+        <h2>Каталог телескопов</h2>
 
-        <!-- Панель фильтрации -->
-    <form class="filter-panel" method="GET" action="/tile">
-        <div class="filter-title">Стоимость замера, ₽</div>
+        <form class="filter-container" method="GET" action="/telescope-tile">
+            <div class="filter-title">Широта расположения телескопа</div>
 
-        <div class="range-slider">
-            <div class="slider-track"></div>
-            <div class="slider-range" id="slider-range"></div>
-            <input type="range" min="0" max="5000" value="{{ .min }}" step="100"
-                class="slider-input" id="range-min" name="min">
-            <input type="range" min="0" max="5000" value="{{ .max }}" step="100"
-                class="slider-input" id="range-max" name="max">
-        </div>
+            <div class="range-slider">
+                <div class="slider-track"></div>
 
-        <div class="filter-values">
-            <span id="label-min">От {{ .min }} ₽</span>
-            <span id="label-max">до {{ .max }} ₽</span>
-        </div>
+                <input type="range"
+                    min="-90.0" max="90.0"
+                    value="{{ .min }}" step="0.01"
+                    class="slider-input" name="min">
 
-        <button type="submit" class="filter-apply">Применить</button>
-    </form>
+                <input type="range"
+                    min="-90.0" max="90.0"
+                    value="{{ .max }}" step="0.01"
+                    class="slider-input" name="max">
+            </div>
 
-        <p class="results-label">Результаты поиска:</p>
+            <div class="filter-values">
+                <span id="label-min">От {{ .min }}°</span>
+                <span id="label-max">до {{ .max }}°</span>
+            </div>
 
-        <!-- Сетка карточек: ровно 2 колонки -->
+            <button type="submit" class="main-button">Применить</button>
+        </form>
+
+        <h2>Результаты поиска:</h2>
+
         <div class="cards-grid">
             {{ range .telescopes }}
             <div class="telescope-card">
-                <img src="{{ .ImageURL }}" alt="{{ .Title }}" class="card-image">
-                <div class="card-title">{{ .Title }}</div>
-                <div class="card-likes">♡ {{ .LikesCount }}</div>
-                <a href="/telescope/{{ .ID }}" class="card-button">Подробнее</a>
+                <img src="{{ .ImageURL }}" alt="{{ .Title }}" class="card-telescope-image">
+                <h3>{{ .Title }}</h3>
+                <div class="card-likes">
+                    <img src="/static/heart_empty.svg">
+                    <p>{{ .LikesCount }}</p>
+                </div>
+                <a href="/telescope/{{ .ID }}" class="main-button">Подробнее</a>
             </div>
             {{ end }}
         </div>
