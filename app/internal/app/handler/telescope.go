@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"app/internal/app/ds"
 	"app/internal/app/repository"
 	"net/http"
 	"strconv"
@@ -19,8 +20,27 @@ func NewHandler(r *repository.Repository) *Handler {
 	}
 }
 
+func (h *Handler) RegisterHandler(router *gin.Engine) {
+	router.GET("/telescope-feed", h.GetTelescopeFeed)
+	router.GET("/telescope-tile", h.GetTelescopeTile)
+	router.GET("/telescope-draft", h.GetTelescopeDraft)
+}
+
+func (h *Handler) RegisterStatic(router *gin.Engine) {
+	router.LoadHTMLGlob("templates/*")
+	router.Static("/static", "./resources")
+}
+
+func (h *Handler) errorHandler(ctx *gin.Context, errorStatusCode int, err error) {
+	logrus.Error(err.Error())
+	ctx.JSON(errorStatusCode, gin.H{
+		"status":      "error",
+		"description": err.Error(),
+	})
+}
+
 func (h *Handler) GetTelescopeTile(ctx *gin.Context) {
-	var telescopes []repository.Telescope
+	var telescopes []ds.Telescope
 	var err error
 
 	minLatitude := -90.0
@@ -64,7 +84,7 @@ func (h *Handler) GetTelescopeFeed(ctx *gin.Context) {
 		}
 	}
 
-	var current repository.Telescope
+	var current ds.Telescope
 	found := false
 	for _, t := range telescopes {
 		if t.ID == currentID {
