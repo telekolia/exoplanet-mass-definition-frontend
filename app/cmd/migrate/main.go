@@ -1,4 +1,4 @@
-package migrate
+package main
 
 import (
 	"app/internal/app/ds"
@@ -18,6 +18,8 @@ func main() {
 
 	err = db.AutoMigrate(
 		&ds.Telescope{},
+		&ds.TelescopeLike{},
+		&ds.User{},
 	)
 	if err != nil {
 		panic("cant migrate db")

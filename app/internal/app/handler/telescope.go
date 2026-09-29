@@ -59,13 +59,26 @@ func (h *Handler) GetTelescopeTile(ctx *gin.Context) {
 
 	telescopes, err = h.Repository.GetTelescopesByLatitudeRange(minLatitude, maxLatitude)
 	if err != nil {
-		logrus.Error(err)
+		h.errorHandler(ctx, http.StatusInternalServerError, err)
+		return
+	}
+
+	ids := make([]uint, 0, len(telescopes))
+	for _, t := range telescopes {
+		ids = append(ids, t.ID)
+	}
+
+	counts, err := h.Repository.GetTelescopeLikesCounts(ids)
+	if err != nil {
+		logrus.Error("likes counts:", err)
+		counts = map[uint]int64{}
 	}
 
 	ctx.HTML(http.StatusOK, "telescope-tile.html", gin.H{
 		"telescopes": telescopes,
 		"min":        minLatitude,
 		"max":        maxLatitude,
+		"likes":      counts,
 	})
 }
 
@@ -87,7 +100,7 @@ func (h *Handler) GetTelescopeFeed(ctx *gin.Context) {
 	var current ds.Telescope
 	found := false
 	for _, t := range telescopes {
-		if t.ID == currentID {
+		if t.ID == uint(currentID) {
 			current = t
 			found = true
 			break
@@ -100,23 +113,29 @@ func (h *Handler) GetTelescopeFeed(ctx *gin.Context) {
 	nextID := 0
 	minID := 0
 	for i, t := range telescopes {
-		if i == 0 || t.ID < minID {
-			minID = t.ID
+		if i == 0 || t.ID < uint(minID) {
+			minID = int(t.ID)
 		}
 		if t.ID > current.ID {
-			if nextID == 0 || t.ID < nextID {
-				nextID = t.ID
+			if nextID == 0 || t.ID < uint(nextID) {
+				nextID = int(t.ID)
 			}
 		}
 	}
-
 	if nextID == 0 {
 		nextID = minID
 	}
 
+	likesCount, err := h.Repository.GetTelescopeLikesCount(current.ID)
+	if err != nil {
+		logrus.Error("likes count:", err)
+		likesCount = 0
+	}
+
 	ctx.HTML(http.StatusOK, "telescope-feed.html", gin.H{
-		"telescope": current,
-		"next":      nextID,
+		"telescope":  current,
+		"next":       nextID,
+		"likesCount": likesCount,
 	})
 }
 

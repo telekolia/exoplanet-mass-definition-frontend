@@ -52,7 +52,7 @@
                 <h3>{{ .Title }}</h3>
                 <div class="card-likes">
                     <img src="/static/heart_empty.svg">
-                    <p>{{ .LikesCount }}</p>
+                    <p>{{ index $.likes .ID }}</p>
                 </div>
                 <a href="/telescope-feed?id={{ .ID }}" class="main-button">Подробнее</a>
             </div>
