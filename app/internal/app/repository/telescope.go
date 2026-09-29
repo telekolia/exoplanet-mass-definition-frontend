@@ -40,6 +40,15 @@ func (r *Repository) GetTelescopes() ([]ds.Telescope, error) {
 	return telescopes, nil
 }
 
+func (r *Repository) GetTelescopeDraft() (ds.Telescope, error) {
+	telescope := ds.Telescope{}
+	err := r.db.Where("status = 'draft'").First(&telescope).Error
+	if err != nil {
+		return ds.Telescope{}, err
+	}
+	return telescope, nil
+}
+
 func (r *Repository) GetTelescope(id int) (ds.Telescope, error) {
 	telescope := ds.Telescope{}
 	err := r.db.Where("ID = ?", id).First(&telescope).Error

@@ -140,7 +140,7 @@ func (h *Handler) GetTelescopeFeed(ctx *gin.Context) {
 }
 
 func (h *Handler) GetTelescopeDraft(ctx *gin.Context) {
-	telescope, err := h.Repository.GetTelescope(1)
+	telescope, err := h.Repository.GetTelescopeDraft()
 	if err != nil {
 		ctx.String(http.StatusNotFound, err.Error())
 		return
