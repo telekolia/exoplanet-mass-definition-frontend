@@ -82,14 +82,14 @@ func (r *Repository) GetTelescopeFeedItem(currentID int, next bool) (ds.Telescop
 
 func (r *Repository) GetTelescopesByLatitudeRange(minLatitude, maxLatitude float64) ([]ds.Telescope, error) {
 	var telescope []ds.Telescope
-	err := r.db.Where("Latitude >= ? AND Latitude <= ?", minLatitude, maxLatitude).Find(&telescope).Error
+	err := r.db.Where("Latitude >= ? AND Latitude <= ? AND Status = ?", minLatitude, maxLatitude, "published").Find(&telescope).Error
 	if err != nil {
 		return nil, err
 	}
 	return telescope, nil
 }
 
-func (r *Repository) CreateDraftTelescope(userID uint, name string) (ds.Telescope, error) {
+func (r *Repository) CreateDraftTelescope(userID uint, title string) (ds.Telescope, error) {
 	var existing ds.Telescope
 	err := r.db.Where("creator_id = ? AND status = ?", userID, "draft").First(&existing).Error
 	if err == nil {
@@ -97,11 +97,11 @@ func (r *Repository) CreateDraftTelescope(userID uint, name string) (ds.Telescop
 	}
 
 	newTelescope := ds.Telescope{
-		Name:       name,
-		Status:     "draft",
-		CreatorID:  userID,
-		DateCreate: time.Now(),
-		DateFormed: time.Now(),
+		Title:        title,
+		Status:       "draft",
+		CreatorID:    userID,
+		CreationTime: time.Now(),
+		FormingTime:  time.Now(),
 	}
 
 	if err := r.db.Create(&newTelescope).Error; err != nil {
@@ -110,20 +110,27 @@ func (r *Repository) CreateDraftTelescope(userID uint, name string) (ds.Telescop
 	return newTelescope, nil
 }
 
-func (r *Repository) PublishTelescope(id uint, description string, freq1, freq2 float64) error {
-	return r.db.Model(&ds.Telescope{}).
+func (r *Repository) PublishTelescope(id uint, description string, latitude, longitude float64) error {
+	res := r.db.Model(&ds.Telescope{}).
 		Where("id = ? AND status = ?", id, "draft").
 		Updates(map[string]interface{}{
-			"description": description,
-			"freq1":       freq1,
-			"freq2":       freq2,
-			"status":      "published",
-			"date_formed": time.Now(),
-		}).Error
+			"description":  description,
+			"latitude":     latitude,
+			"longitude":    longitude,
+			"status":       "published",
+			"forming_time": time.Now(),
+		})
+	if res.Error != nil {
+		return res.Error
+	}
+	if res.RowsAffected == 0 {
+		return errors.New("черновик не найден")
+	}
+	return nil
 }
 
 func (r *Repository) DeleteTelescope(id int) error {
-	query := "UPDATE telescopes SET status = 'deleted', date_formed = NOW() WHERE id = $1 AND status != 'deleted'"
+	query := "UPDATE telescopes SET status = 'deleted', forming_time = NOW() WHERE id = $1 AND status != 'deleted'"
 	res := r.db.Exec(query, id)
 	if res.Error != nil {
 		return res.Error

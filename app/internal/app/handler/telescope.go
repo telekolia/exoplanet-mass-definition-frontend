@@ -3,11 +3,14 @@ package handler
 import (
 	"app/internal/app/ds"
 	"app/internal/app/repository"
+	"errors"
+	"math"
 	"net/http"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
+	"gorm.io/gorm"
 )
 
 type Handler struct {
@@ -121,8 +124,8 @@ func (h *Handler) GetTelescopeFeed(ctx *gin.Context) {
 
 func (h *Handler) GetTelescopeDraft(ctx *gin.Context) {
 	telescope, err := h.Repository.GetTelescopeDraft()
-	if err != nil {
-		ctx.String(http.StatusNotFound, err.Error())
+	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+		ctx.String(http.StatusInternalServerError, err.Error())
 		return
 	}
 
@@ -130,41 +133,53 @@ func (h *Handler) GetTelescopeDraft(ctx *gin.Context) {
 }
 
 func (h *Handler) CreateTelescopeDraft(c *gin.Context) {
-	name := c.PostForm("name")
-	if name == "" {
-		name = "Новый композитор"
+	title := c.PostForm("title")
+	if title == "" {
+		title = "Новый телескоп"
 	}
 
-	_, err := h.Repository.CreateDraftTelescope(2, name)
+	_, err := h.Repository.CreateDraftTelescope(2, title)
 	if err != nil {
 		c.String(http.StatusInternalServerError, err.Error())
 		return
 	}
 
-	c.Redirect(http.StatusFound, "/composer-draft")
+	c.Redirect(http.StatusFound, "/telescope-draft")
 }
 
 func (h *Handler) PublishTelescope(c *gin.Context) {
 	idStr := c.PostForm("id")
-	id, _ := strconv.Atoi(idStr)
+	id, err := strconv.Atoi(idStr)
+	if err != nil || id <= 0 {
+		c.String(http.StatusBadRequest, "Некорректный ID")
+		return
+	}
 
 	description := c.PostForm("description")
-	freq1, _ := strconv.ParseFloat(c.PostForm("freq1"), 64)
-	freq2, _ := strconv.ParseFloat(c.PostForm("freq2"), 64)
+	latitude, err := strconv.ParseFloat(c.PostForm("latitude"), 64)
+	if err != nil || math.IsNaN(latitude) || latitude < -90 || latitude > 90 {
+		c.String(http.StatusBadRequest, "Некорректная широта")
+		return
+	}
+	longitude, err := strconv.ParseFloat(c.PostForm("longitude"), 64)
+	if err != nil || math.IsNaN(longitude) || longitude < -180 || longitude > 180 {
+		c.String(http.StatusBadRequest, "Некорректная долгота")
+		return
+	}
 
-	err := h.Repository.PublishTelescope(uint(id), description, freq1, freq2)
+	err = h.Repository.PublishTelescope(uint(id), description, latitude, longitude)
 	if err != nil {
 		c.String(http.StatusBadRequest, "Ошибка при публикации")
 		return
 	}
 
-	c.Redirect(http.StatusFound, "/composers-grid")
+	c.Redirect(http.StatusFound, "/telescope-tile")
 }
 
 func (h *Handler) DeleteTelescope(c *gin.Context) {
 	idStr := c.PostForm("id")
 	id, err := strconv.Atoi(idStr)
-	if err != nil {
+	if err != nil || id <= 0 {
 		c.String(http.StatusBadRequest, "Некорректный ID")
 		return
 	}
@@ -175,5 +190,5 @@ func (h *Handler) DeleteTelescope(c *gin.Context) {
 		return
 	}
 
-	c.Redirect(http.StatusFound, "/composers-grid")
+	c.Redirect(http.StatusFound, "/telescope-tile")
 }
