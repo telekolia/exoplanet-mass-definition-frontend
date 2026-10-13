@@ -53,7 +53,8 @@ func (r *Repository) SetTelescopeLike(ctx context.Context, telescopeID, userID u
 	var count int64
 	err := r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		var telescope ds.Telescope
-		if err := tx.Clauses(clause.Locking{Strength: "UPDATE"}).Where("id = ? AND status = ?", telescopeID, ds.TelescopePublished).First(&telescope).Error; err != nil {
+		if err := tx.Clauses(clause.Locking{Strength: "UPDATE"}).Where("id = ? AND status = ?",
+			telescopeID, ds.TelescopePublished).First(&telescope).Error; err != nil {
 			return err
 		}
 		if like == 1 {
@@ -62,7 +63,8 @@ func (r *Repository) SetTelescopeLike(ctx context.Context, telescopeID, userID u
 				return err
 			}
 		} else {
-			if err := tx.Where("telescope_id = ? AND user_id = ?", telescopeID, userID).Delete(&ds.TelescopeLike{}).Error; err != nil {
+			if err := tx.Where("telescope_id = ? AND user_id = ?",
+				telescopeID, userID).Delete(&ds.TelescopeLike{}).Error; err != nil {
 				return err
 			}
 		}
