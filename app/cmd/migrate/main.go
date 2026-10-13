@@ -3,8 +3,11 @@ package main
 import (
 	"app/internal/app/ds"
 	"app/internal/app/dsn"
+	"app/internal/app/session"
+	"errors"
 
 	"github.com/joho/godotenv"
+	"golang.org/x/crypto/bcrypt"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
@@ -17,11 +20,28 @@ func main() {
 	}
 
 	err = db.AutoMigrate(
+		&ds.User{},
 		&ds.Telescope{},
 		&ds.TelescopeLike{},
-		&ds.User{},
 	)
 	if err != nil {
 		panic("cant migrate db")
+	}
+	user := session.GetCurrentUser()
+	err = db.First(&user, user.ID).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		hash, err := bcrypt.GenerateFromPassword([]byte("test123"), bcrypt.DefaultCost)
+		if err != nil {
+			panic(err)
+		}
+		user = ds.User{ID: session.CurrentUserID, Login: "lab3-user", Password: string(hash)}
+		if err := db.Create(&user).Error; err != nil {
+			panic(err)
+		}
+	} else if err != nil {
+		panic(err)
+	}
+	if err := db.Exec("SELECT setval(pg_get_serial_sequence('users', 'id'), (SELECT MAX(id) FROM users), true)").Error; err != nil {
+		panic(err)
 	}
 }

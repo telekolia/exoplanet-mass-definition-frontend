@@ -2,13 +2,20 @@ package handler
 
 import (
 	"app/internal/app/ds"
+	"app/internal/app/media"
 	"app/internal/app/repository"
+	"app/internal/app/session"
 	"errors"
+	"fmt"
 	"math"
+	"mime/multipart"
 	"net/http"
 	"strconv"
+	"strings"
+	"unicode/utf8"
 
 	"github.com/gin-gonic/gin"
+	"github.com/gin-gonic/gin/binding"
 	"github.com/sirupsen/logrus"
 	"gorm.io/gorm"
 )
@@ -18,177 +25,313 @@ type Handler struct {
 }
 
 func NewHandler(r *repository.Repository) *Handler {
-	return &Handler{
-		Repository: r,
-	}
+	return &Handler{Repository: r}
 }
 
 func (h *Handler) RegisterHandler(router *gin.Engine) {
-	router.GET("/telescope-feed", h.GetTelescopeFeed)
-	router.GET("/telescope-feed/:id", h.GetTelescopeFeed)
-	router.GET("/telescope-tile", h.GetTelescopeTile)
-	router.GET("/telescope-draft", h.GetTelescopeDraft)
-
-	router.POST("/telescope/create", h.CreateTelescopeDraft)
-	router.POST("/telescope/publish", h.PublishTelescope)
-	router.POST("/telescope/delete", h.DeleteTelescope)
+	binding.EnableDecoderDisallowUnknownFields = true
+	router.HandleMethodNotAllowed = true
+	api := router.Group("/api")
+	api.GET("/telescopes", h.GetTelescopesAPI)
+	api.GET("/telescopes/feed", h.GetTelescopeFeedAPI)
+	api.GET("/telescopes/feed/:id", h.GetTelescopeFeedAPI)
+	api.GET("/telescopes/draft", h.GetTelescopeDraftAPI)
+	api.POST("/telescopes", h.CreateTelescopeDraftAPI)
+	api.PUT("/telescopes/:id", h.PublishTelescopeAPI)
+	api.DELETE("/telescopes/:id", h.DeleteTelescopeAPI)
+	api.POST("/telescopes/:id/likes", h.LikeTelescopeAPI)
+	api.POST("/users", h.RegisterUserAPI)
+	api.POST("/users/login", h.LoginUserAPI)
+	api.POST("/users/logout", h.LogoutUserAPI)
+	router.NoRoute(func(ctx *gin.Context) {
+		h.errorHandler(ctx, http.StatusNotFound, errors.New("маршрут не найден"))
+	})
+	router.NoMethod(func(ctx *gin.Context) {
+		h.errorHandler(ctx, http.StatusMethodNotAllowed, errors.New("метод не поддерживается"))
+	})
 }
 
 func (h *Handler) RegisterStatic(router *gin.Engine) {
-	router.LoadHTMLGlob("templates/*")
 	router.Static("/static", "./resources")
 }
 
-func (h *Handler) errorHandler(ctx *gin.Context, errorStatusCode int, err error) {
-	logrus.Error(err.Error())
-	ctx.JSON(errorStatusCode, gin.H{
-		"status":      "error",
-		"description": err.Error(),
-	})
+func (h *Handler) errorHandler(ctx *gin.Context, code int, err error) {
+	message := err.Error()
+	if code >= 500 {
+		logrus.Error(err)
+		message = "внутренняя ошибка сервера"
+	}
+	ctx.JSON(code, gin.H{"status": "fail", "message": message})
 }
 
-func (h *Handler) GetTelescopeTile(ctx *gin.Context) {
-	var telescopes []ds.Telescope
-	var err error
+func (h *Handler) repositoryError(ctx *gin.Context, err error) {
+	code := http.StatusInternalServerError
+	switch {
+	case errors.Is(err, gorm.ErrRecordNotFound):
+		code = http.StatusNotFound
+	case errors.Is(err, repository.ErrForbidden):
+		code = http.StatusForbidden
+	case errors.Is(err, repository.ErrConflict), errors.Is(err, gorm.ErrDuplicatedKey):
+		code = http.StatusConflict
+	}
+	h.errorHandler(ctx, code, err)
+}
 
-	minLatitude := -90.0
-	maxLatitude := 90.0
+func (h *Handler) requestID(ctx *gin.Context) (uint, bool) {
+	id, err := strconv.ParseUint(ctx.Param("id"), 10, 32)
+	if err != nil || id == 0 {
+		h.errorHandler(ctx, http.StatusBadRequest, errors.New("ID должен быть положительным целым числом"))
+		return 0, false
+	}
+	return uint(id), true
+}
 
-	if v := ctx.Query("min"); v != "" {
-		if parsed, e := strconv.ParseFloat(v, 64); e == nil {
-			minLatitude = parsed
+func (h *Handler) bindJSON(ctx *gin.Context, request interface{}) bool {
+	if ctx.ContentType() != "application/json" {
+		h.errorHandler(ctx, http.StatusUnsupportedMediaType, errors.New("ожидается application/json"))
+		return false
+	}
+	ctx.Request.Body = http.MaxBytesReader(ctx.Writer, ctx.Request.Body, 1<<20)
+	if err := ctx.ShouldBindJSON(request); err != nil {
+		code := http.StatusBadRequest
+		var tooLarge *http.MaxBytesError
+		if errors.As(err, &tooLarge) {
+			code = http.StatusRequestEntityTooLarge
+		}
+		h.errorHandler(ctx, code, fmt.Errorf("некорректные поля запроса: %w", err))
+		return false
+	}
+	return true
+}
+
+func (h *Handler) GetTelescopesAPI(ctx *gin.Context) {
+	minLatitude, maxLatitude := -90.0, 90.0
+	for _, bound := range []struct {
+		name  string
+		value *float64
+	}{{"min", &minLatitude}, {"max", &maxLatitude}} {
+		if values, exists := ctx.Request.URL.Query()[bound.name]; exists {
+			if len(values) != 1 || values[0] == "" {
+				h.errorHandler(ctx, http.StatusBadRequest, errors.New("каждая граница широты должна быть указана один раз и не быть пустой"))
+				return
+			}
+			parsed, err := strconv.ParseFloat(values[0], 64)
+			if err != nil || math.IsNaN(parsed) || parsed < -90 || parsed > 90 {
+				h.errorHandler(ctx, http.StatusBadRequest, errors.New("границы широты должны быть числами от -90 до 90"))
+				return
+			}
+			*bound.value = parsed
 		}
 	}
-	if v := ctx.Query("max"); v != "" {
-		if parsed, e := strconv.ParseFloat(v, 64); e == nil {
-			maxLatitude = parsed
-		}
-	}
-
-	telescopes, err = h.Repository.GetTelescopesByLatitudeRange(minLatitude, maxLatitude)
-	if err != nil {
-		h.errorHandler(ctx, http.StatusInternalServerError, err)
+	if minLatitude > maxLatitude {
+		h.errorHandler(ctx, http.StatusBadRequest, errors.New("min не может быть больше max"))
 		return
 	}
-
-	ids := make([]uint, 0, len(telescopes))
-	for _, t := range telescopes {
-		ids = append(ids, t.ID)
-	}
-
-	counts, err := h.Repository.GetTelescopeLikesCounts(ids)
+	telescopes, err := h.Repository.GetTelescopes(ctx.Request.Context(), minLatitude, maxLatitude)
 	if err != nil {
-		logrus.Error("likes counts:", err)
-		counts = map[uint]int64{}
+		h.repositoryError(ctx, err)
+		return
 	}
-
-	ctx.HTML(http.StatusOK, "telescope-tile.html", gin.H{
-		"telescopes": telescopes,
-		"min":        minLatitude,
-		"max":        maxLatitude,
-		"likes":      counts,
-	})
+	ids := make([]uint, 0, len(telescopes))
+	for _, telescope := range telescopes {
+		ids = append(ids, telescope.ID)
+	}
+	counts, err := h.Repository.GetTelescopeLikesCounts(ctx.Request.Context(), ids)
+	if err != nil {
+		h.repositoryError(ctx, err)
+		return
+	}
+	user := session.GetCurrentUser()
+	data := make([]ds.TelescopeSerializer, 0, len(telescopes))
+	for _, telescope := range telescopes {
+		item := h.serializeTelescope(telescope, user.ID, counts[telescope.ID])
+		data = append(data, item)
+	}
+	ctx.JSON(http.StatusOK, gin.H{"status": "success", "data": data})
 }
 
-func (h *Handler) GetTelescopeFeed(ctx *gin.Context) {
-	idStr := ctx.Param("id")
-	var id int
-	var err error
-	if idStr != "" {
-		id, err = strconv.Atoi(idStr)
-		if err != nil {
-			ctx.String(http.StatusBadRequest, "Invalid ID")
+func (h *Handler) GetTelescopeFeedAPI(ctx *gin.Context) {
+	var id uint
+	if ctx.Param("id") != "" {
+		var ok bool
+		id, ok = h.requestID(ctx)
+		if !ok {
 			return
 		}
 	}
-
-	next := ctx.Query("next") == "true"
-
-	telescope, err := h.Repository.GetTelescopeFeedItem(id, next)
+	next := false
+	if values, exists := ctx.Request.URL.Query()["next"]; exists {
+		if id == 0 || len(values) != 1 || (values[0] != "true" && values[0] != "false") {
+			h.errorHandler(ctx, http.StatusBadRequest, errors.New("next требует ID в пути и значение true или false"))
+			return
+		}
+		next = values[0] == "true"
+	}
+	telescope, err := h.Repository.GetTelescopeFeedItem(ctx.Request.Context(), id, next)
 	if err != nil {
-		ctx.String(http.StatusNotFound, err.Error())
+		h.repositoryError(ctx, err)
 		return
 	}
-
-	likesCount, err := h.Repository.GetTelescopeLikesCount(telescope.ID)
+	user := session.GetCurrentUser()
+	count, err := h.Repository.GetTelescopeLikesCount(ctx.Request.Context(), telescope.ID)
 	if err != nil {
-		logrus.Error("likes count:", err)
-		likesCount = 0
+		h.repositoryError(ctx, err)
+		return
 	}
-
-	ctx.HTML(http.StatusOK, "telescope-feed.html", gin.H{
-		"telescope":  telescope,
-		"likesCount": likesCount,
-	})
+	liked, err := h.Repository.IsTelescopeLiked(ctx.Request.Context(), telescope.ID, user.ID)
+	if err != nil {
+		h.repositoryError(ctx, err)
+		return
+	}
+	item := h.serializeTelescope(telescope, user.ID, count)
+	full := ds.FullTelescopeSerializer{TelescopeSerializer: item, Creator: telescope.Creator}
+	if liked {
+		full.IsLiked = 1
+	}
+	ctx.JSON(http.StatusOK, gin.H{"status": "success", "data": full})
 }
 
-func (h *Handler) GetTelescopeDraft(ctx *gin.Context) {
-	telescope, err := h.Repository.GetTelescopeDraft()
-	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
-		ctx.String(http.StatusInternalServerError, err.Error())
+func (h *Handler) GetTelescopeDraftAPI(ctx *gin.Context) {
+	user := session.GetCurrentUser()
+	telescope, err := h.Repository.GetTelescopeDraft(ctx.Request.Context(), user.ID)
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		ctx.JSON(http.StatusOK, gin.H{"status": "success", "data": nil})
 		return
 	}
-
-	ctx.HTML(http.StatusOK, "telescope-draft.html", gin.H{"telescope": telescope})
+	if err != nil {
+		h.repositoryError(ctx, err)
+		return
+	}
+	item := h.serializeTelescope(telescope, user.ID, 0)
+	ctx.JSON(http.StatusOK, gin.H{"status": "success", "data": item})
 }
 
-func (h *Handler) CreateTelescopeDraft(c *gin.Context) {
-	title := c.PostForm("title")
-	if title == "" {
-		title = "Новый телескоп"
-	}
-
-	_, err := h.Repository.CreateDraftTelescope(2, title)
-	if err != nil {
-		c.String(http.StatusInternalServerError, err.Error())
+func (h *Handler) CreateTelescopeDraftAPI(ctx *gin.Context) {
+	if ctx.ContentType() != "multipart/form-data" {
+		h.errorHandler(ctx, http.StatusUnsupportedMediaType, errors.New("ожидается multipart/form-data"))
 		return
 	}
-
-	c.Redirect(http.StatusFound, "/telescope-draft")
+	ctx.Request.Body = http.MaxBytesReader(ctx.Writer, ctx.Request.Body, media.MaxRequestSize)
+	err := ctx.Request.ParseMultipartForm(2 << 20)
+	if ctx.Request.MultipartForm != nil {
+		defer ctx.Request.MultipartForm.RemoveAll()
+	}
+	if err != nil {
+		code := http.StatusBadRequest
+		var tooLarge *http.MaxBytesError
+		if errors.As(err, &tooLarge) {
+			code = http.StatusRequestEntityTooLarge
+		}
+		h.errorHandler(ctx, code, err)
+		return
+	}
+	for name, values := range ctx.Request.MultipartForm.Value {
+		if name != "title" || len(values) != 1 {
+			h.errorHandler(ctx, http.StatusBadRequest, fmt.Errorf("недопустимое текстовое поле: %s; разрешено только title", name))
+			return
+		}
+	}
+	for name, files := range ctx.Request.MultipartForm.File {
+		if (name != "image" && name != "video") || len(files) != 1 {
+			h.errorHandler(ctx, http.StatusBadRequest, errors.New("допустимо не более одного файла image и одного video"))
+			return
+		}
+	}
+	title := strings.TrimSpace(ctx.Request.PostForm.Get("title"))
+	if title == "" || utf8.RuneCountInString(title) > 127 {
+		h.errorHandler(ctx, http.StatusBadRequest, errors.New("название должно содержать от 1 до 127 символов"))
+		return
+	}
+	image, ok := h.formFile(ctx, "image")
+	if !ok {
+		return
+	}
+	video, ok := h.formFile(ctx, "video")
+	if !ok {
+		return
+	}
+	user := session.GetCurrentUser()
+	telescope, err := h.Repository.CreateDraftTelescope(ctx.Request.Context(), user.ID, title, image, video)
+	if err != nil {
+		h.repositoryError(ctx, err)
+		return
+	}
+	item := h.serializeTelescope(telescope, user.ID, 0)
+	ctx.Header("Location", "/api/telescopes/draft")
+	ctx.JSON(http.StatusCreated, gin.H{"status": "success", "data": item, "message": "черновик создан"})
 }
 
-func (h *Handler) PublishTelescope(c *gin.Context) {
-	idStr := c.PostForm("id")
-	id, err := strconv.Atoi(idStr)
-	if err != nil || id <= 0 {
-		c.String(http.StatusBadRequest, "Некорректный ID")
-		return
+func (h *Handler) formFile(ctx *gin.Context, name string) (*multipart.FileHeader, bool) {
+	header, err := ctx.FormFile(name)
+	if errors.Is(err, http.ErrMissingFile) {
+		return nil, true
 	}
-
-	description := c.PostForm("description")
-	latitude, err := strconv.ParseFloat(c.PostForm("latitude"), 64)
-	if err != nil || math.IsNaN(latitude) || latitude < -90 || latitude > 90 {
-		c.String(http.StatusBadRequest, "Некорректная широта")
-		return
-	}
-	longitude, err := strconv.ParseFloat(c.PostForm("longitude"), 64)
-	if err != nil || math.IsNaN(longitude) || longitude < -180 || longitude > 180 {
-		c.String(http.StatusBadRequest, "Некорректная долгота")
-		return
-	}
-
-	err = h.Repository.PublishTelescope(uint(id), description, latitude, longitude)
 	if err != nil {
-		c.String(http.StatusBadRequest, "Ошибка при публикации")
-		return
+		h.errorHandler(ctx, http.StatusBadRequest, err)
+		return nil, false
 	}
-
-	c.Redirect(http.StatusFound, "/telescope-tile")
+	if _, _, err = media.ValidateFileUpload(header, name); err != nil {
+		code := http.StatusBadRequest
+		if errors.Is(err, media.ErrTooLarge) {
+			code = http.StatusRequestEntityTooLarge
+		}
+		h.errorHandler(ctx, code, err)
+		return nil, false
+	}
+	return header, true
 }
 
-func (h *Handler) DeleteTelescope(c *gin.Context) {
-	idStr := c.PostForm("id")
-	id, err := strconv.Atoi(idStr)
-	if err != nil || id <= 0 {
-		c.String(http.StatusBadRequest, "Некорректный ID")
+func (h *Handler) PublishTelescopeAPI(ctx *gin.Context) {
+	id, ok := h.requestID(ctx)
+	if !ok {
 		return
 	}
-
-	err = h.Repository.DeleteTelescope(id)
+	var request ds.PublishTelescopeRequest
+	if !h.bindJSON(ctx, &request) {
+		return
+	}
+	request.Description = strings.TrimSpace(request.Description)
+	if request.Description == "" {
+		h.errorHandler(ctx, http.StatusBadRequest, errors.New("описание не может быть пустым"))
+		return
+	}
+	user := session.GetCurrentUser()
+	telescope, err := h.Repository.PublishTelescope(ctx.Request.Context(), id, user.ID, request.Description, *request.Latitude, *request.Longitude)
 	if err != nil {
-		c.String(http.StatusInternalServerError, "Ошибка при удалении: "+err.Error())
+		h.repositoryError(ctx, err)
 		return
 	}
+	item := h.serializeTelescope(telescope, user.ID, 0)
+	ctx.JSON(http.StatusOK, gin.H{"status": "success", "data": item, "message": "телескоп опубликован"})
+}
 
-	c.Redirect(http.StatusFound, "/telescope-tile")
+func (h *Handler) DeleteTelescopeAPI(ctx *gin.Context) {
+	id, ok := h.requestID(ctx)
+	if !ok {
+		return
+	}
+	user := session.GetCurrentUser()
+	if err := h.Repository.DeleteTelescope(ctx.Request.Context(), id, user.ID); err != nil {
+		h.repositoryError(ctx, err)
+		return
+	}
+	ctx.JSON(http.StatusOK, gin.H{"status": "success", "message": "телескоп удалён"})
+}
+
+func (h *Handler) LikeTelescopeAPI(ctx *gin.Context) {
+	id, ok := h.requestID(ctx)
+	if !ok {
+		return
+	}
+	var request ds.LikeTelescopeRequest
+	if !h.bindJSON(ctx, &request) {
+		return
+	}
+	user := session.GetCurrentUser()
+	count, err := h.Repository.SetTelescopeLike(ctx.Request.Context(), id, user.ID, *request.Like)
+	if err != nil {
+		h.repositoryError(ctx, err)
+		return
+	}
+	ctx.JSON(http.StatusOK, gin.H{"status": "success", "data": gin.H{"is_liked": *request.Like, "likes_count": count}})
 }
