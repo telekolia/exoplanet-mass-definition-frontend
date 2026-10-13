@@ -14,7 +14,7 @@
     <main class="feed-main">
         <article class="feed-card">
             <video class="feed-card__video" autoplay muted loop playsinline>
-                <source src="/static/lenta.mp4" type="video/mp4">
+                <source src="{{ .telescope.VideoURL }}" type="video/mp4">
             </video>
 
             <div class="feed-card__overlay">
@@ -41,12 +41,12 @@
 
                     <div>
                         <div class="feed-card__actions__box">
-                            <img src="static/heart_empty.svg" class="feed-card__actions__box-text">
+                            <img src="/static/heart_empty.svg" class="feed-card__actions__box-text">
                         </div>
                         <p class="feed-card__actions__solo-text feed-card__actions__likes-amount">{{ .likesCount }}</p>
                     </div>
 
-                    <a href="/telescope-feed?id={{ .next }}" class="feed-card__actions__next">
+                    <a href="/telescope-feed/{{ .telescope.ID }}?next=true" class="feed-card__actions__next">
                         <img src="/static/arrow.svg" alt="далее">
                     </a>
                 </aside>

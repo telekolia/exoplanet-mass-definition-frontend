@@ -22,8 +22,13 @@ func NewHandler(r *repository.Repository) *Handler {
 
 func (h *Handler) RegisterHandler(router *gin.Engine) {
 	router.GET("/telescope-feed", h.GetTelescopeFeed)
+	router.GET("/telescope-feed/:id", h.GetTelescopeFeed)
 	router.GET("/telescope-tile", h.GetTelescopeTile)
 	router.GET("/telescope-draft", h.GetTelescopeDraft)
+
+	router.POST("/telescope/create", h.CreateTelescopeDraft)
+	router.POST("/telescope/publish", h.PublishTelescope)
+	router.POST("/telescope/delete", h.DeleteTelescope)
 }
 
 func (h *Handler) RegisterStatic(router *gin.Engine) {
@@ -83,58 +88,33 @@ func (h *Handler) GetTelescopeTile(ctx *gin.Context) {
 }
 
 func (h *Handler) GetTelescopeFeed(ctx *gin.Context) {
-	telescopes, err := h.Repository.GetTelescopes()
-	if err != nil || len(telescopes) == 0 {
-		logrus.Error(err)
-		ctx.String(http.StatusInternalServerError, "нет данных")
+	idStr := ctx.Param("id")
+	var id int
+	var err error
+	if idStr != "" {
+		id, err = strconv.Atoi(idStr)
+		if err != nil {
+			ctx.String(http.StatusBadRequest, "Invalid ID")
+			return
+		}
+	}
+
+	next := ctx.Query("next") == "true"
+
+	telescope, err := h.Repository.GetTelescopeFeedItem(id, next)
+	if err != nil {
+		ctx.String(http.StatusNotFound, err.Error())
 		return
 	}
 
-	currentID := 0
-	if v := ctx.Query("id"); v != "" {
-		if parsed, e := strconv.Atoi(v); e == nil {
-			currentID = parsed
-		}
-	}
-
-	var current ds.Telescope
-	found := false
-	for _, t := range telescopes {
-		if t.ID == uint(currentID) {
-			current = t
-			found = true
-			break
-		}
-	}
-	if !found {
-		current = telescopes[0]
-	}
-
-	nextID := 0
-	minID := 0
-	for i, t := range telescopes {
-		if i == 0 || t.ID < uint(minID) {
-			minID = int(t.ID)
-		}
-		if t.ID > current.ID {
-			if nextID == 0 || t.ID < uint(nextID) {
-				nextID = int(t.ID)
-			}
-		}
-	}
-	if nextID == 0 {
-		nextID = minID
-	}
-
-	likesCount, err := h.Repository.GetTelescopeLikesCount(current.ID)
+	likesCount, err := h.Repository.GetTelescopeLikesCount(telescope.ID)
 	if err != nil {
 		logrus.Error("likes count:", err)
 		likesCount = 0
 	}
 
 	ctx.HTML(http.StatusOK, "telescope-feed.html", gin.H{
-		"telescope":  current,
-		"next":       nextID,
+		"telescope":  telescope,
 		"likesCount": likesCount,
 	})
 }
@@ -147,4 +127,53 @@ func (h *Handler) GetTelescopeDraft(ctx *gin.Context) {
 	}
 
 	ctx.HTML(http.StatusOK, "telescope-draft.html", gin.H{"telescope": telescope})
+}
+
+func (h *Handler) CreateTelescopeDraft(c *gin.Context) {
+	name := c.PostForm("name")
+	if name == "" {
+		name = "Новый композитор"
+	}
+
+	_, err := h.Repository.CreateDraftTelescope(2, name)
+	if err != nil {
+		c.String(http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	c.Redirect(http.StatusFound, "/composer-draft")
+}
+
+func (h *Handler) PublishTelescope(c *gin.Context) {
+	idStr := c.PostForm("id")
+	id, _ := strconv.Atoi(idStr)
+
+	description := c.PostForm("description")
+	freq1, _ := strconv.ParseFloat(c.PostForm("freq1"), 64)
+	freq2, _ := strconv.ParseFloat(c.PostForm("freq2"), 64)
+
+	err := h.Repository.PublishTelescope(uint(id), description, freq1, freq2)
+	if err != nil {
+		c.String(http.StatusBadRequest, "Ошибка при публикации")
+		return
+	}
+
+	c.Redirect(http.StatusFound, "/composers-grid")
+}
+
+func (h *Handler) DeleteTelescope(c *gin.Context) {
+	idStr := c.PostForm("id")
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		c.String(http.StatusBadRequest, "Некорректный ID")
+		return
+	}
+
+	err = h.Repository.DeleteTelescope(id)
+	if err != nil {
+		c.String(http.StatusInternalServerError, "Ошибка при удалении: "+err.Error())
+		return
+	}
+
+	c.Redirect(http.StatusFound, "/composers-grid")
 }

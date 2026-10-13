@@ -55,6 +55,11 @@
                     <p>{{ index $.likes .ID }}</p>
                 </div>
                 <a href="/telescope-feed?id={{ .ID }}" class="main-button">Подробнее</a>
+
+                <form action="/telescope/delete" method="POST" onclick="event.stopPropagation();" style="display: inline;">
+                    <input type="hidden" name="id" value="{{ .ID }}">
+                    <button type="submit" class="main-button">Удалить</button>
+                </form>
             </div>
             {{ end }}
         </div>
