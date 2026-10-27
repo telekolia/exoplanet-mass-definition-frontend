@@ -12,7 +12,7 @@ type LikeTelescopeRequest struct {
 
 type RegisterUserRequest struct {
 	Login    string `json:"login" binding:"required,max=64"`
-	Password string `json:"password" binding:"required,min=6"`
+	Password string `json:"password" binding:"required,min=6,max=100"`
 }
 type TelescopeSerializer struct {
 	Telescope

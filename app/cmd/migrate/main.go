@@ -7,7 +7,6 @@ import (
 	"errors"
 
 	"github.com/joho/godotenv"
-	"golang.org/x/crypto/bcrypt"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
@@ -30,11 +29,7 @@ func main() {
 	user := session.GetCurrentUser()
 	err = db.First(&user, user.ID).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
-		hash, err := bcrypt.GenerateFromPassword([]byte("test123"), bcrypt.DefaultCost)
-		if err != nil {
-			panic(err)
-		}
-		user = ds.User{ID: session.CurrentUserID, Login: "lab3-user", Password: string(hash)}
+		user = ds.User{ID: session.CurrentUserID, Login: "lab3-user", Password: "test123"}
 		if err := db.Create(&user).Error; err != nil {
 			panic(err)
 		}

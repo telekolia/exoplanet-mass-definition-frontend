@@ -14,8 +14,8 @@ func (h *Handler) RegisterUserAPI(ctx *gin.Context) {
 		return
 	}
 	request.Login = strings.TrimSpace(request.Login)
-	if request.Login == "" || len([]byte(request.Password)) > 72 {
-		ctx.JSON(http.StatusBadRequest, gin.H{"status": "fail", "message": "логин не может быть пустым; пароль — не более 72 байт"})
+	if request.Login == "" {
+		ctx.JSON(http.StatusBadRequest, gin.H{"status": "fail", "message": "логин не может быть пустым"})
 		return
 	}
 	user, err := h.Repository.RegisterUser(ctx.Request.Context(), request.Login, request.Password)
