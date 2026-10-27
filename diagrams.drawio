@@ -74,7 +74,7 @@
     </mxGraphModel>
   </diagram>
   <diagram id="gXVU8EcEw1oEUuQLzltk" name="UML">
-    <mxGraphModel dx="1205" dy="827" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="583" pageHeight="827" math="0" shadow="0">
+    <mxGraphModel dx="1145" dy="786" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="583" pageHeight="827" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
@@ -108,8 +108,8 @@
         <mxCell id="m_J_P7_j-yMJbtg9CXRv-10" parent="m_J_P7_j-yMJbtg9CXRv-3" style="rounded=0;whiteSpace=wrap;html=0;fillColor=#FFFFFF;strokeColor=#000000;strokeWidth=1;fontFamily=Arial;fontColor=#000000;shadow=0;container=1;collapsible=0;" value="" vertex="1">
           <mxGeometry height="94.59" width="174.01" x="201" y="51" as="geometry" />
         </mxCell>
-        <mxCell id="m_J_P7_j-yMJbtg9CXRv-11" parent="m_J_P7_j-yMJbtg9CXRv-10" style="text;html=0;whiteSpace=wrap;overflow=hidden;fillColor=none;strokeColor=none;fontFamily=Arial;fontColor=#000000;fontSize=16;fontStyle=1;align=center;verticalAlign=middle;" value="Страница добавления&#xa;тарифа" vertex="1">
-          <mxGeometry height="62.0011567164179" width="174.0076898771988" as="geometry" />
+        <mxCell id="m_J_P7_j-yMJbtg9CXRv-11" parent="m_J_P7_j-yMJbtg9CXRv-10" style="text;html=0;whiteSpace=wrap;overflow=hidden;fillColor=none;strokeColor=none;fontFamily=Arial;fontColor=#000000;fontSize=16;fontStyle=1;align=center;verticalAlign=middle;" value="Добавление" vertex="1">
+          <mxGeometry height="50" width="174.01" as="geometry" />
         </mxCell>
         <mxCell id="m_J_P7_j-yMJbtg9CXRv-12" parent="m_J_P7_j-yMJbtg9CXRv-10" style="shape=line;strokeColor=#000000;strokeWidth=1;" value="" vertex="1">
           <mxGeometry width="174.01" y="33.88298507462686" as="geometry" />
@@ -381,7 +381,7 @@
         <mxCell id="m_J_P7_j-yMJbtg9CXRv-81" parent="m_J_P7_j-yMJbtg9CXRv-78" style="shape=line;strokeColor=#000000;strokeWidth=1;" value="" vertex="1">
           <mxGeometry width="306.9142857142857" y="43.35971223021583" as="geometry" />
         </mxCell>
-        <mxCell id="m_J_P7_j-yMJbtg9CXRv-82" parent="m_J_P7_j-yMJbtg9CXRv-78" style="text;html=0;whiteSpace=wrap;overflow=hidden;fillColor=none;strokeColor=none;fontFamily=Arial;fontColor=#000000;fontSize=16;align=left;verticalAlign=top;spacingLeft=6;spacingTop=5;" value="+GET /api/telescopes()&#xa;+GET /api/tariffs/telescopes()&#xa;+GET /api/telescopes/draft()&#xa;+POST /api/telescopes()&#xa;+PUT /api/telescopes/:id/publication()&#xa;+DELETE /api/telescopes/:id()&#xa;+POST /api/telescopes/:id/likes()" vertex="1">
+        <mxCell id="m_J_P7_j-yMJbtg9CXRv-82" parent="m_J_P7_j-yMJbtg9CXRv-78" style="text;html=0;whiteSpace=wrap;overflow=hidden;fillColor=none;strokeColor=none;fontFamily=Arial;fontColor=#000000;fontSize=16;align=left;verticalAlign=top;spacingLeft=6;spacingTop=5;" value="+GET /api/telescopes()&#xa;+GET /api/telescopes/feed()&#xa;+GET /api/telescopes/draft()&#xa;+POST /api/telescopes()&#xa;+PUT /api/telescopes/:id()&#xa;+DELETE /api/telescopes/:id()&#xa;+POST /api/telescopes/:id/likes()" vertex="1">
           <mxGeometry height="163.11510791366908" width="306.9142857142857" y="43.35971223021583" as="geometry" />
         </mxCell>
         <mxCell id="m_J_P7_j-yMJbtg9CXRv-83" edge="1" parent="m_J_P7_j-yMJbtg9CXRv-78" source="m_J_P7_j-yMJbtg9CXRv-79" style="endArrow=none;html=1;rounded=0;exitX=0;exitY=1;exitDx=0;exitDy=0;entryX=1;entryY=1;entryDx=0;entryDy=0;" target="m_J_P7_j-yMJbtg9CXRv-79" value="">
