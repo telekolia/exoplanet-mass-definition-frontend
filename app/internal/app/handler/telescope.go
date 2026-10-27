@@ -34,7 +34,6 @@ func (h *Handler) RegisterHandler(router *gin.Engine) {
 	api := router.Group("/api")
 	api.GET("/telescopes", h.GetTelescopesAPI)
 	api.GET("/telescopes/feed", h.GetTelescopeFeedAPI)
-	api.GET("/telescopes/feed/:id", h.GetTelescopeFeedAPI)
 	api.GET("/telescopes/draft", h.GetTelescopeDraftAPI)
 	api.POST("/telescopes", h.CreateTelescopeDraftAPI)
 	api.PUT("/telescopes/:id", h.PublishTelescopeAPI)
@@ -152,17 +151,22 @@ func (h *Handler) GetTelescopesAPI(ctx *gin.Context) {
 
 func (h *Handler) GetTelescopeFeedAPI(ctx *gin.Context) {
 	var id uint
-	if ctx.Param("id") != "" {
-		var ok bool
-		id, ok = h.requestID(ctx)
-		if !ok {
+	if values, exists := ctx.Request.URL.Query()["id"]; exists {
+		if len(values) != 1 {
+			h.errorHandler(ctx, http.StatusBadRequest, errors.New("ID должен быть положительным целым числом"))
 			return
 		}
+		parsed, err := strconv.ParseUint(values[0], 10, 32)
+		if err != nil || parsed == 0 {
+			h.errorHandler(ctx, http.StatusBadRequest, errors.New("ID должен быть положительным целым числом"))
+			return
+		}
+		id = uint(parsed)
 	}
 	next := false
 	if values, exists := ctx.Request.URL.Query()["next"]; exists {
 		if id == 0 || len(values) != 1 || (values[0] != "true" && values[0] != "false") {
-			h.errorHandler(ctx, http.StatusBadRequest, errors.New("next требует ID в пути и значение true или false"))
+			h.errorHandler(ctx, http.StatusBadRequest, errors.New("next требует параметр id и значение true или false"))
 			return
 		}
 		next = values[0] == "true"
