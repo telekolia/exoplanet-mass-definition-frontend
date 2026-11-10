@@ -5,3 +5,7 @@
 *.env
 
 *.bkp
+node_modules/
+dist/
+.env.local
+.env.*.local
