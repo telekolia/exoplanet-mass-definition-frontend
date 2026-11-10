@@ -33,6 +33,10 @@
     justify-content: space-around;
 }
 
+.filter-container > .main-button {
+    align-self: center;
+}
+
 .filter-title {
     margin: 0px;
     text-align: left;
