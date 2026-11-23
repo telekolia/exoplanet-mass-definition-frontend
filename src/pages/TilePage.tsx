@@ -1,49 +1,46 @@
-import { useEffect, useState } from 'react'
-import { Alert, Spinner } from 'react-bootstrap'
+import { useEffect } from 'react'
+import { Alert } from 'react-bootstrap'
 import { LatitudeFilter } from '../components/LatitudeFilter'
 import { TelescopeCard } from '../components/TelescopeCard'
-import { FULL_LATITUDE_RANGE, type Telescope } from '../modules/telescope'
-import { getTelescopes } from '../modules/telescopesApi'
+import { useAppDispatch, useAppSelector } from '../hooks'
+import { selectBusy } from '../store'
+import { applyRange, clearActionError, deleteTelescope, getTelescopesList, setRange } from '../slices/telescopesSlice'
 import '../styles/tile.css'
 
 export function TilePage() {
-  const [range, setRange] = useState(FULL_LATITUDE_RANGE)
-  const [appliedRange, setAppliedRange] = useState(FULL_LATITUDE_RANGE)
-  const [telescopes, setTelescopes] = useState<Telescope[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState('')
+  const dispatch = useAppDispatch()
+  const { range, appliedRange, items, listError, listLoading, listMock, actionError } = useAppSelector((state) => state.telescopes)
+  const { token, isAuthenticated } = useAppSelector((state) => state.user)
+  const busy = useAppSelector(selectBusy)
+
+  useEffect(() => { dispatch(clearActionError()) }, [dispatch])
 
   useEffect(() => {
-    const controller = new AbortController()
-    setLoading(true)
-    setError('')
-    getTelescopes(appliedRange, controller.signal)
-      .then((items) => {
-        if (!controller.signal.aborted) setTelescopes(items)
-      })
-      .catch((reason: Error) => {
-        if (!controller.signal.aborted) setError(reason.message)
-      })
-      .finally(() => {
-        if (!controller.signal.aborted) setLoading(false)
-      })
-    return () => controller.abort()
-  }, [appliedRange])
+    const request = dispatch(getTelescopesList())
+    return () => request.abort()
+  }, [dispatch, appliedRange, token])
 
   return (
     <main className="tile-main">
       <h2>Каталог телескопов</h2>
-      <LatitudeFilter range={range} onChange={setRange} onApply={() => setAppliedRange({ ...range })} />
+      <LatitudeFilter range={range} disabled={busy} onChange={(value) => dispatch(setRange(value))} onApply={() => dispatch(applyRange())} />
       <h2>Результаты поиска:</h2>
-      {loading ? (
-        <Spinner className="align-self-center" animation="border" aria-label="Загрузка каталога" />
-      ) : error ? (
-        <Alert variant="danger">{error}</Alert>
-      ) : telescopes.length === 0 ? (
+      {listMock && <Alert variant="secondary">Сервис недоступен. Показан демонстрационный каталог.</Alert>}
+      {actionError && <Alert variant="danger">{actionError}</Alert>}
+      {listError ? (
+        <Alert variant="danger">
+          {listError}
+          <button className="btn btn-link" disabled={busy} onClick={() => dispatch(getTelescopesList())}>Повторить</button>
+        </Alert>
+      ) : !listLoading && items.length === 0 ? (
         <p className="text-center">Телескопы в этом диапазоне не найдены.</p>
       ) : (
         <div className="cards-grid">
-          {telescopes.map((telescope) => <TelescopeCard key={telescope.id} telescope={telescope} />)}
+          {items.map((telescope) => (
+            <TelescopeCard key={telescope.id} telescope={telescope} disabled={busy}
+              canDelete={isAuthenticated && !listMock && Boolean(telescope.is_creator)}
+              onDelete={() => dispatch(deleteTelescope(telescope.id))} />
+          ))}
         </div>
       )}
     </main>

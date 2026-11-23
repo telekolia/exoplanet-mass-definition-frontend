@@ -7,6 +7,9 @@ export interface Telescope {
   image_url: string
   video_url: string
   likes_count: number
+  is_creator?: boolean
+  is_liked?: number
+  status?: string
 }
 
 export interface LatitudeRange {

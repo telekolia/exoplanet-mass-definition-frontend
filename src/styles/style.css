@@ -27,6 +27,7 @@ body {
 }
 
 .app {
+  position: relative;
   width: min(411px, 100%);
   margin: 0 auto;
   min-height: 100dvh;
@@ -81,6 +82,52 @@ body {
 
 .bottom-nav .nav-link.disabled {
     color: #aeb4b8;
+}
+
+.bottom-nav button.nav-link {
+    background: none;
+    border: 0;
+    padding: 0;
+}
+
+.bottom-nav button.nav-link:hover {
+    color: #EF600A;
+}
+
+[aria-disabled="true"],
+button:disabled {
+    cursor: default;
+    opacity: 0.65;
+}
+
+.current-user {
+    display: block;
+    font-size: 0.75rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.top-header h1 {
+    margin: 0 0 4px;
+}
+
+.auth-error {
+    flex-shrink: 0;
+    margin: 0;
+}
+
+.request-overlay {
+    position: absolute;
+    inset: 80px 0 0;
+    z-index: 1000;
+    background: rgb(19 20 21 / 65%);
+    color: #fff;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
 }
 
 .main-button {

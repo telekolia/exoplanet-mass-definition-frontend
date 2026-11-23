@@ -9,7 +9,7 @@
     gap: 20px;
 }
 
-.add-main h2 {
+.draft-main h2 {
     font-size: 1.5rem;
     font-weight: 500;
     margin: 0px;
@@ -17,7 +17,7 @@
     text-align: center;
 }
 
-.add-main h3 {
+.draft-main h3 {
     margin: 0px;
     width: 100%;
     text-align: left;
@@ -54,4 +54,16 @@
 .preview__content {
     object-fit: cover;
     max-height: 200px;
+    max-width: 100%;
+}
+
+.input-container > label,
+.input-container > .form-group,
+.input-container > div,
+.input-container > textarea {
+    width: 100%;
+}
+
+.draft-main .main-button {
+    align-self: center;
 }

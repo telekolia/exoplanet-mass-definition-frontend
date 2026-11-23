@@ -1,10 +1,17 @@
-import { Card } from 'react-bootstrap'
+import { Button, Card } from 'react-bootstrap'
 import { Link } from 'react-router-dom'
 import heart from '../assets/heart_empty.svg'
 import defaultImage from '../assets/telescope.png'
 import type { Telescope } from '../modules/telescope'
 
-export function TelescopeCard({ telescope }: { telescope: Telescope }) {
+interface Props {
+  telescope: Telescope
+  disabled?: boolean
+  canDelete?: boolean
+  onDelete: () => void
+}
+
+export function TelescopeCard({ telescope, disabled, canDelete, onDelete }: Props) {
   return (
     <Card as="article" className="telescope-card">
       <Card.Img
@@ -20,7 +27,8 @@ export function TelescopeCard({ telescope }: { telescope: Telescope }) {
         <img src={heart} alt="Лайки" />
         <p>{telescope.likes_count}</p>
       </div>
-      <Link className="main-button" to={`/telescope-feed?id=${telescope.id}`}>Подробнее</Link>
+      <Link className="main-button" aria-disabled={disabled} onClick={(event) => { if (disabled) event.preventDefault() }} to={`/telescope-feed?id=${telescope.id}`}>Подробнее</Link>
+      {canDelete && <Button variant="light" className="main-button" disabled={disabled} onClick={onDelete}>Удалить</Button>}
     </Card>
   )
 }

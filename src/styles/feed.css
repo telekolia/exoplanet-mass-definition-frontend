@@ -4,11 +4,45 @@
 }
 
 .feed-main {
+    position: relative;
     flex: 1;
     overflow-y: auto;
     width: 100%;
     display: flex;
     justify-content: center;
+}
+
+.feed-notice,
+.feed-error {
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    right: 8px;
+    z-index: 5;
+}
+
+.feed-notice {
+    background: rgb(19 20 21 / 80%);
+    color: #fff;
+    font-size: 0.75rem;
+    text-align: center;
+    padding: 6px;
+    border-radius: 4px;
+}
+
+.feed-like {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.feed-like img {
+    width: 42px;
+    height: 42px;
+}
+
+.feed-like:disabled {
+    opacity: 1;
 }
 
 .feed-card {
