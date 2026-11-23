@@ -19,6 +19,7 @@ export function FeedPage() {
     const id = idParam === null ? null : Number(idParam)
     setLoading(true)
     setError('')
+    setTelescope(null)
     if (id !== null && (!Number.isSafeInteger(id) || id < 1)) {
       setError('Некорректный ID телескопа.')
       setLoading(false)
