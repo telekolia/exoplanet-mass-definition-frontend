@@ -14,4 +14,5 @@ setUnauthorizedHandler(() => {
 })
 export type RootState = ReturnType<typeof store.getState>
 export type AppDispatch = typeof store.dispatch
-export const selectBusy = (state: RootState) => state.user.loading || Object.keys(state.ui.requests).length > 0
+export const selectBusy = (state: RootState) =>
+  state.user.loading || Object.keys(state.ui.requests).length > 0
