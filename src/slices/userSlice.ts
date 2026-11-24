@@ -1,15 +1,13 @@
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit'
-import { getSession } from '../modules/session'
 import { sessionEnded, sessionStarted } from './sessionActions'
 
-const initialSession = getSession()
 const userSlice = createSlice({
   name: 'user',
   initialState: {
-    token: initialSession?.token ?? '',
-    username: initialSession?.username ?? '',
-    expiresAt: initialSession?.expiresAt ?? 0,
-    isAuthenticated: Boolean(initialSession), loading: false, error: '',
+    token: '',
+    username: '',
+    expiresAt: 0,
+    isAuthenticated: false, loading: false, error: '',
   },
   reducers: {
     setAuthLoading(state, action: PayloadAction<boolean>) {

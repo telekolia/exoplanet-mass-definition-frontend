@@ -39,7 +39,7 @@ export function LoginPage() {
 
   if (authenticated) return <Navigate to="/telescope-tile" replace />
   return (
-    <main className="draft-main">
+    <main className="draft-main login-main">
       <h2>Вход</h2>
       <Form onSubmit={submit}>
         <fieldset className="input-container" disabled={busy}>

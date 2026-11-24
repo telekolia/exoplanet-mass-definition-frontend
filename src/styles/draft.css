@@ -9,6 +9,10 @@
     gap: 20px;
 }
 
+.login-main {
+    justify-content: flex-start;
+}
+
 .draft-main h2 {
     font-size: 1.5rem;
     font-weight: 500;
